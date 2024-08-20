@@ -1,4 +1,4 @@
- /*******************************************************************************
+/*******************************************************************************
  Source file for the Net Pres Encryption glue functions to work with Harmony
 
 
@@ -9,30 +9,28 @@
 
 *******************************************************************************/
 
-/*****************************************************************************
- Copyright (C) 2013-2018 Microchip Technology Inc. and its subsidiaries.
+/*
+Copyright (C) 2013-2023, Microchip Technology Inc., and its subsidiaries. All rights reserved.
 
-Microchip Technology Inc. and its subsidiaries.
+The software and documentation is provided by microchip and its contributors
+"as is" and any express, implied or statutory warranties, including, but not
+limited to, the implied warranties of merchantability, fitness for a particular
+purpose and non-infringement of third party intellectual property rights are
+disclaimed to the fullest extent permitted by law. In no event shall microchip
+or its contributors be liable for any direct, indirect, incidental, special,
+exemplary, or consequential damages (including, but not limited to, procurement
+of substitute goods or services; loss of use, data, or profits; or business
+interruption) however caused and on any theory of liability, whether in contract,
+strict liability, or tort (including negligence or otherwise) arising in any way
+out of the use of the software and documentation, even if advised of the
+possibility of such damage.
 
-Subject to your compliance with these terms, you may use Microchip software 
-and any derivatives exclusively with Microchip products. It is your 
-responsibility to comply with third party license terms applicable to your 
-use of third party software (including open source software) that may 
-accompany Microchip software.
-
-THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS". NO WARRANTIES, WHETHER 
-EXPRESS, IMPLIED OR STATUTORY, APPLY TO THIS SOFTWARE, INCLUDING ANY IMPLIED 
-WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY, AND FITNESS FOR A PARTICULAR 
-PURPOSE.
-
-IN NO EVENT WILL MICROCHIP BE LIABLE FOR ANY INDIRECT, SPECIAL, PUNITIVE, 
-INCIDENTAL OR CONSEQUENTIAL LOSS, DAMAGE, COST OR EXPENSE OF ANY KIND 
-WHATSOEVER RELATED TO THE SOFTWARE, HOWEVER CAUSED, EVEN IF MICROCHIP HAS 
-BEEN ADVISED OF THE POSSIBILITY OR THE DAMAGES ARE FORESEEABLE. TO THE 
-FULLEST EXTENT ALLOWED BY LAW, MICROCHIP'S TOTAL LIABILITY ON ALL CLAIMS IN 
-ANY WAY RELATED TO THIS SOFTWARE WILL NOT EXCEED THE AMOUNT OF FEES, IF ANY, 
-THAT YOU HAVE PAID DIRECTLY TO MICROCHIP FOR THIS SOFTWARE.
-*****************************************************************************/
+Except as expressly permitted hereunder and subject to the applicable license terms
+for any third-party software incorporated in the software and any applicable open
+source software license terms, no license or other rights, whether express or
+implied, are granted under any patent or other intellectual property rights of
+Microchip or any third party.
+*/
 
 
 #include "net_pres_enc_glue.h"
@@ -44,18 +42,8 @@ THAT YOU HAVE PAID DIRECTLY TO MICROCHIP FOR THIS SOFTWARE.
 #include "wolfssl/wolfcrypt/logging.h"
 #include "wolfssl/wolfcrypt/random.h"
 
-#include "cert_header.h"
-#include "cert_header.h"
-#include "cert_header.h"
-
-
 extern  int CheckAvailableSize(WOLFSSL *ssl, int size);
 #include "wolfssl/wolfcrypt/port/atmel/atmel.h"
-
-#define NET_PRES_MAX_CERT_LEN	4096
-unsigned char g_NewCertFile[NET_PRES_MAX_CERT_LEN];
-long g_NewCertSz = 0;
-int g_NewCertFormat;
 
 
 typedef struct 
@@ -89,7 +77,7 @@ NET_PRES_EncProviderObject net_pres_EncProviderStreamClient0 =
 };
 	
 net_pres_wolfsslInfo net_pres_wolfSSLInfoStreamClient0;
-
+	
 int NET_PRES_EncGlue_StreamClientReceiveCb0(void *sslin, char *buf, int sz, void *ctx)
 {
     int fd = *(int *)ctx;
@@ -121,6 +109,12 @@ static uint8_t _net_pres_wolfsslUsers = 0;
 		
 bool NET_PRES_EncProviderStreamClientInit0(NET_PRES_TransportObject * transObject)
 {
+    const uint8_t * caCertsPtr;
+    int32_t caCertsLen;
+    if (!NET_PRES_CertStoreGetCACerts(&caCertsPtr, &caCertsLen, 0))
+    {
+        return false;
+    }
     if (_net_pres_wolfsslUsers == 0)
     {
         wolfSSL_Init();
@@ -132,60 +126,18 @@ bool NET_PRES_EncProviderStreamClientInit0(NET_PRES_TransportObject * transObjec
     {
         return false;
     }
-	wolfSSL_CTX_set_verify(net_pres_wolfSSLInfoStreamClient0.context, WOLFSSL_VERIFY_PEER, 0);
+    // Turn off verification, because SNTP is usually blocked by a firewall
+    wolfSSL_CTX_set_verify(net_pres_wolfSSLInfoStreamClient0.context, SSL_VERIFY_NONE, 0);
 	
     wolfSSL_SetIORecv(net_pres_wolfSSLInfoStreamClient0.context, (CallbackIORecv)&NET_PRES_EncGlue_StreamClientReceiveCb0);
     wolfSSL_SetIOSend(net_pres_wolfSSLInfoStreamClient0.context, (CallbackIOSend)&NET_PRES_EncGlue_StreamClientSendCb0);
-	{	
-    const uint8_t *tmpCaCertsPtr = app_client_cert_der_2048_azure;
-    int32_t tmpCaCertsLen = sizeof_app_client_cert_der_2048_azure;
-
-    if (wolfSSL_CTX_load_verify_buffer(net_pres_wolfSSLInfoStreamClient0.context, tmpCaCertsPtr, tmpCaCertsLen, SSL_FILETYPE_ASN1) != SSL_SUCCESS)
-		{
-			// Couldn't load the CA certificates
-        //SYS_CONSOLE_MESSAGE("Something went wrong loading the CA certificates\r\n");
-			wolfSSL_CTX_free(net_pres_wolfSSLInfoStreamClient0.context);
-			return false;
-		}
-	}
-
-	{
-		const uint8_t *tmpCaCertsPtr = app_client_cert_der_mosquitto_org;
-		int32_t tmpCaCertsLen = sizeof_app_client_cert_der_mosquitto_org;
-
-    if (wolfSSL_CTX_load_verify_buffer(net_pres_wolfSSLInfoStreamClient0.context, tmpCaCertsPtr, tmpCaCertsLen, SSL_FILETYPE_ASN1) != SSL_SUCCESS)
+    if (wolfSSL_CTX_load_verify_buffer(net_pres_wolfSSLInfoStreamClient0.context, caCertsPtr, caCertsLen, SSL_FILETYPE_ASN1) != SSL_SUCCESS)
     {
-                // Couldn't load the CA certificates
+        // Couldn't load the CA certificates
         //SYS_CONSOLE_MESSAGE("Something went wrong loading the CA certificates\r\n");
-                wolfSSL_CTX_free(net_pres_wolfSSLInfoStreamClient0.context);
-                return false;
-        }
-	}
-
-	{
-		const uint8_t *tmpCaCertsPtr = app_client_cert_der_starfield_base;
-		int32_t tmpCaCertsLen = sizeof_app_client_cert_der_starfield_base;
-
-        if (wolfSSL_CTX_load_verify_buffer(net_pres_wolfSSLInfoStreamClient0.context, tmpCaCertsPtr, tmpCaCertsLen, SSL_FILETYPE_ASN1) != SSL_SUCCESS)
-        {
-            // Couldn't load the CA certificates
-            //SYS_CONSOLE_MESSAGE("Something went wrong loading the CA certificates\r\n");
-            wolfSSL_CTX_free(net_pres_wolfSSLInfoStreamClient0.context);
-            return false;
-        }
+        wolfSSL_CTX_free(net_pres_wolfSSLInfoStreamClient0.context);
+        return false;
     }
-
-		if(g_NewCertSz)
-		{
-			if (wolfSSL_CTX_load_verify_buffer(net_pres_wolfSSLInfoStreamClient0.context, g_NewCertFile, g_NewCertSz, g_NewCertFormat) != SSL_SUCCESS)
-			{
-				// Couldn't load the CA certificates
-				//SYS_CONSOLE_MESSAGE("Something went wrong loading the CA certificates\r\n");
-				wolfSSL_CTX_free(net_pres_wolfSSLInfoStreamClient0.context);
-				return false;
-			}
-			g_NewCertSz = 0;
-		}
     /*initialize Trust*Go and load device certificate into the context*/
     atcatls_set_callbacks(net_pres_wolfSSLInfoStreamClient0.context);
     /*Use TLS extension since we support only P256R1 with ECC608 Trust&Go*/
@@ -207,9 +159,6 @@ bool NET_PRES_EncProviderStreamClientDeinit0(void)
     }
     return true;
 }
-
-char *sni_host_name = NULL;
-
 bool NET_PRES_EncProviderStreamClientOpen0(uintptr_t transHandle, void * providerData)
 {
         WOLFSSL* ssl = wolfSSL_new(net_pres_wolfSSLInfoStreamClient0.context);
@@ -222,15 +171,10 @@ bool NET_PRES_EncProviderStreamClientOpen0(uintptr_t transHandle, void * provide
             wolfSSL_free(ssl);
             return false;
         }
-
-		if(strlen(sni_host_name) != 0)
-		{
-//        	if (wolfSSL_UseSNI(ssl, WOLFSSL_SNI_HOST_NAME, NET_PRES_SNI_HOST_NAME, strlen(NET_PRES_SNI_HOST_NAME)) != WOLFSSL_SUCCESS)
-			if (wolfSSL_UseSNI(ssl, WOLFSSL_SNI_HOST_NAME, sni_host_name, strlen(sni_host_name)) != WOLFSSL_SUCCESS)
-	        {
-    	        return false;
-        	}
-                }
+        if (wolfSSL_UseSNI(ssl, WOLFSSL_SNI_HOST_NAME, NET_PRES_SNI_HOST_NAME, strlen(NET_PRES_SNI_HOST_NAME)) != WOLFSSL_SUCCESS)
+        {
+            return false;
+        }
         if (wolfSSL_UseALPN(ssl, NET_PRES_ALPN_PROTOCOL_NAME_LIST, sizeof(NET_PRES_ALPN_PROTOCOL_NAME_LIST),WOLFSSL_ALPN_FAILED_ON_MISMATCH) != WOLFSSL_SUCCESS)
         {
             return false;
@@ -373,30 +317,4 @@ int32_t NET_PRES_EncProviderMaxOutputSize0(void * providerData)
         return 0;
     }  
     return ret;
-}
-
-bool NET_PRES_SetCertificate(unsigned char* in, long sz, int format)
-{
-    int ret = 0;
-	
-    if(net_pres_wolfSSLInfoStreamClient0.context == NULL)
-    {
-	if(sz > NET_PRES_MAX_CERT_LEN)
-		return false;
-		
-        memcpy(g_NewCertFile, in, sz);
-        g_NewCertSz = sz;
-		g_NewCertFormat = format;
-        return true;
-    }
-    
-    ret = wolfSSL_CTX_load_verify_buffer(net_pres_wolfSSLInfoStreamClient0.context, in, sz, format);
-    if (ret != SSL_SUCCESS)
-    {
-        // Couldn't load the CA certificates
-        SYS_CONSOLE_PRINT("Something went wrong (%d) loading the CA certificates\r\n", ret);
-        wolfSSL_CTX_free(net_pres_wolfSSLInfoStreamClient0.context);
-        return false;
-    }
-    return true;
 }

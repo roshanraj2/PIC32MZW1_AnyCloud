@@ -21,7 +21,7 @@
 
 // DOM-IGNORE-BEGIN
 /*******************************************************************************
-* Copyright (C) 2018-2022 Microchip Technology Inc. and its subsidiaries.
+* Copyright (C) 2018 Microchip Technology Inc. and its subsidiaries.
 *
 * Subject to your compliance with these terms, you may use Microchip software
 * and any derivatives exclusively with Microchip products. It is your
@@ -52,6 +52,7 @@
 
 #include "configuration.h"
 #include "definitions.h"
+#include "sys_tasks.h"
 
 
 // *****************************************************************************
@@ -62,23 +63,23 @@
 /* Handle for the APP_Tasks. */
 TaskHandle_t xAPP_Tasks;
 
-void _APP_Tasks(  void *pvParameters  )
+static void lAPP_Tasks(  void *pvParameters  )
 {   
-    while(1)
+    while(true)
     {
         APP_Tasks();
-        vTaskDelay(100 / portTICK_PERIOD_MS);
+        vTaskDelay(100U / portTICK_PERIOD_MS);
     }
 }
 /* Handle for the MQTT_APP_Tasks. */
 TaskHandle_t xMQTT_APP_Tasks;
 
-void _MQTT_APP_Tasks(  void *pvParameters  )
+static void lMQTT_APP_Tasks(  void *pvParameters  )
 {   
-    while(1)
+    while(true)
     {
         MQTT_APP_Tasks();
-        vTaskDelay(50 / portTICK_PERIOD_MS);
+        vTaskDelay(50U / portTICK_PERIOD_MS);
     }
 }
 
@@ -110,6 +111,7 @@ void _TCPIP_STACK_Task(  void *pvParameters  )
         vTaskDelay(4 / portTICK_PERIOD_MS);
     }
 }
+
 
 static void _WDRV_PIC32MZW1_Tasks(  void *pvParameters  )
 {
@@ -160,7 +162,7 @@ void SYS_Tasks ( void )
 
 
     /* Maintain Device Drivers */
-    xTaskCreate( _WDRV_PIC32MZW1_Tasks,
+        xTaskCreate( _WDRV_PIC32MZW1_Tasks,
         "WDRV_PIC32MZW1_Tasks",
         1024,
         (void*)NULL,
@@ -201,7 +203,7 @@ void SYS_Tasks ( void )
         (TaskHandle_t*)NULL
     );
 
-#if 0 // Not Needed
+
     xTaskCreate( _SYS_WIFI_Task,
         "SYS_WIFI_Tasks",
         SYS_WIFI_RTOS_SIZE,
@@ -209,14 +211,13 @@ void SYS_Tasks ( void )
         SYS_WIFI_RTOS_PRIORITY,
         (TaskHandle_t*)NULL
     );
-#endif
 
 
 
 
     /* Maintain the application's state machine. */
         /* Create OS Thread for APP_Tasks. */
-    xTaskCreate((TaskFunction_t) _APP_Tasks,
+    (void) xTaskCreate((TaskFunction_t) lAPP_Tasks,
                 "APP_Tasks",
                 4096,
                 NULL,
@@ -224,7 +225,7 @@ void SYS_Tasks ( void )
                 &xAPP_Tasks);
 
     /* Create OS Thread for MQTT_APP_Tasks. */
-    xTaskCreate((TaskFunction_t) _MQTT_APP_Tasks,
+    (void) xTaskCreate((TaskFunction_t) lMQTT_APP_Tasks,
                 "MQTT_APP_Tasks",
                 1536,
                 NULL,

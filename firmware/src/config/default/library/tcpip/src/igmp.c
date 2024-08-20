@@ -9,30 +9,28 @@
 
 *******************************************************************************/
 
-/*****************************************************************************
- Copyright (C) 2016-2020 Microchip Technology Inc. and its subsidiaries.
+/*
+Copyright (C) 2016-2023, Microchip Technology Inc., and its subsidiaries. All rights reserved.
 
-Microchip Technology Inc. and its subsidiaries.
+The software and documentation is provided by microchip and its contributors
+"as is" and any express, implied or statutory warranties, including, but not
+limited to, the implied warranties of merchantability, fitness for a particular
+purpose and non-infringement of third party intellectual property rights are
+disclaimed to the fullest extent permitted by law. In no event shall microchip
+or its contributors be liable for any direct, indirect, incidental, special,
+exemplary, or consequential damages (including, but not limited to, procurement
+of substitute goods or services; loss of use, data, or profits; or business
+interruption) however caused and on any theory of liability, whether in contract,
+strict liability, or tort (including negligence or otherwise) arising in any way
+out of the use of the software and documentation, even if advised of the
+possibility of such damage.
 
-Subject to your compliance with these terms, you may use Microchip software 
-and any derivatives exclusively with Microchip products. It is your 
-responsibility to comply with third party license terms applicable to your 
-use of third party software (including open source software) that may 
-accompany Microchip software.
-
-THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS". NO WARRANTIES, WHETHER 
-EXPRESS, IMPLIED OR STATUTORY, APPLY TO THIS SOFTWARE, INCLUDING ANY IMPLIED 
-WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY, AND FITNESS FOR A PARTICULAR 
-PURPOSE.
-
-IN NO EVENT WILL MICROCHIP BE LIABLE FOR ANY INDIRECT, SPECIAL, PUNITIVE, 
-INCIDENTAL OR CONSEQUENTIAL LOSS, DAMAGE, COST OR EXPENSE OF ANY KIND 
-WHATSOEVER RELATED TO THE SOFTWARE, HOWEVER CAUSED, EVEN IF MICROCHIP HAS 
-BEEN ADVISED OF THE POSSIBILITY OR THE DAMAGES ARE FORESEEABLE. TO THE 
-FULLEST EXTENT ALLOWED BY LAW, MICROCHIP'S TOTAL LIABILITY ON ALL CLAIMS IN 
-ANY WAY RELATED TO THIS SOFTWARE WILL NOT EXCEED THE AMOUNT OF FEES, IF ANY, 
-THAT YOU HAVE PAID DIRECTLY TO MICROCHIP FOR THIS SOFTWARE.
-*****************************************************************************/
+Except as expressly permitted hereunder and subject to the applicable license terms
+for any third-party software incorporated in the software and any applicable open
+source software license terms, no license or other rights, whether express or
+implied, are granted under any patent or other intellectual property rights of
+Microchip or any third party.
+*/
 
 
 
@@ -115,7 +113,7 @@ static void         TCPIP_IGMP_GenQueryTimeout(void);
 static void         TCPIP_IGMP_GroupQueryTimeout(void);
 
 static IPV4_PACKET* _IGMP_AllocateTxPacketStruct (uint16_t totIGMPLen);
-static bool         _IGMP_TxPktAcknowledge(TCPIP_MAC_PACKET* pTxPkt, const void* ackParam);
+static void         _IGMP_TxPktAcknowledge(TCPIP_MAC_PACKET* pTxPkt, const void* ackParam);
 static TCPIP_IGMP_RESULT _IGMP_GenerateStateReport(IPV4_ADDR mcastAddress, int ifIx, TCPIP_IGMP_GIF_STATE_DCPT* pOldDcpt, TCPIP_IGMP_GIF_STATE_DCPT* pNewDcpt);
 static TCPIP_IGMP_RESULT _IGMP_ScheduleFmcReport(IPV4_ADDR groupAddress, TCPIP_IGMPv3_RECORD_TYPE repType, int ifIx, TCPIP_IGMP_GROUP_SOURCE_ADDRESSES* pGroupSources);
 static TCPIP_IGMP_RESULT _IGMP_ScheduleSlcReport(IPV4_ADDR groupAddress, int ifIx, TCPIP_IGMP_GROUP_SOURCE_ADDRESSES* pNewAllow, TCPIP_IGMP_GROUP_SOURCE_ADDRESSES* pNewBlock);
@@ -1469,7 +1467,7 @@ static bool _IGMP_SendQueryReport(TCPIP_IGMP_QUERY_REPORT_NODE* pQNode, int nEnt
 // all API operations need to access a lock/mutex!
 // since they mess with the global hash descriptor and some user threads add, other delete from this global hash!!!!
 TCPIP_IGMP_RESULT TCPIP_IGMP_Subscribe(UDP_SOCKET socket, TCPIP_NET_HANDLE hNet, IPV4_ADDR mcastAddress,
-  		              TCPIP_IGMP_FILTER_TYPE filterMode, const IPV4_ADDR* sourceList, size_t* listSize)
+                      TCPIP_IGMP_FILTER_TYPE filterMode, const IPV4_ADDR* sourceList, size_t* listSize)
 {
     int  ifIx;
     bool isSsm;
@@ -1536,7 +1534,7 @@ TCPIP_IGMP_RESULT TCPIP_IGMP_Subscribe(UDP_SOCKET socket, TCPIP_NET_HANDLE hNet,
 }
 
 TCPIP_IGMP_RESULT TCPIP_IGMP_SubscribeGet(UDP_SOCKET socket, TCPIP_NET_HANDLE hNet, IPV4_ADDR mcastAddress,
-  		              TCPIP_IGMP_FILTER_TYPE* filterMode, IPV4_ADDR* sourceList, size_t* listSize)
+                      TCPIP_IGMP_FILTER_TYPE* filterMode, IPV4_ADDR* sourceList, size_t* listSize)
 {
     int ifIx;
     TCPIP_IGMP_RESULT res;
@@ -1933,7 +1931,7 @@ static void _IGMP_ReportEvent(IPV4_ADDR mcastAddress, TCPIP_IGMP_EVENT_TYPE evTy
 
 // packet deallocation function
 // packet was transmitted by the IP layer
-static bool _IGMP_TxPktAcknowledge(TCPIP_MAC_PACKET* pTxPkt, const void* ackParam)
+static void _IGMP_TxPktAcknowledge(TCPIP_MAC_PACKET* pTxPkt, const void* ackParam)
 {
     if(pTxPkt->modPktData != 0)
     {   // redirect internally. once!
@@ -1946,8 +1944,6 @@ static bool _IGMP_TxPktAcknowledge(TCPIP_MAC_PACKET* pTxPkt, const void* ackPara
     {
         TCPIP_PKT_PacketFree(pTxPkt);
     }
-
-    return false;
 }
 
 static IPV4_PACKET * _IGMP_AllocateTxPacketStruct (uint16_t totIGMPLen)

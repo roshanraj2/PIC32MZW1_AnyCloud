@@ -109,7 +109,6 @@ extern "C" {
 
 #define SYS_NET_TLS_ENABLED
 #define WOLFSSL_TLS13_NO_PEEK_HANDSHAKE_DONE
-#define SYS_NET_TLS_CERT_VERIFY_ENABLED
 
 
 
@@ -144,10 +143,10 @@ extern "C" {
 #define SYS_DEBUG_USE_CONSOLE
 
 
-#define SYS_CONSOLE_DEVICE_MAX_INSTANCES   			1
-#define SYS_CONSOLE_UART_MAX_INSTANCES 	   			1
-#define SYS_CONSOLE_USB_CDC_MAX_INSTANCES 	   		0
-#define SYS_CONSOLE_PRINT_BUFFER_SIZE        		256
+#define SYS_CONSOLE_DEVICE_MAX_INSTANCES   			(1U)
+#define SYS_CONSOLE_UART_MAX_INSTANCES 	   			(1U)
+#define SYS_CONSOLE_USB_CDC_MAX_INSTANCES 	   		(0U)
+#define SYS_CONSOLE_PRINT_BUFFER_SIZE        		(256U)
 
 
 
@@ -157,13 +156,19 @@ extern "C" {
 // Section: Driver Configuration
 // *****************************************************************************
 // *****************************************************************************
+
 /*** WiFi PIC32MZW1 Driver Configuration ***/
+
+#pragma region name="wlan_mem" origin=0xa0040000 size=0x10000
+#define PIC32MZW_RSR_PKT_NUM    (0x10000 / sizeof(WDRV_PIC32MZW_PKT_LIST_NODE))
+
 #define WDRV_PIC32MZW1_DEVICE_USE_SYS_DEBUG
 #define WDRV_PIC32MZW_WPA3_PERSONAL_SUPPORT
 #define WDRV_PIC32MZW_BA414E_SUPPORT
 #define WDRV_PIC32MZW_BIGINTSW_SUPPORT
 #define WDRV_PIC32MZW_ALARM_PERIOD_1MS          390
 #define WDRV_PIC32MZW_ALARM_PERIOD_MAX          168
+
 
 
 // *****************************************************************************
@@ -214,8 +219,8 @@ extern "C" {
 
 /*** TCP Configuration ***/
 #define TCPIP_TCP_MAX_SEG_SIZE_TX		        	1460
-#define TCPIP_TCP_SOCKET_DEFAULT_TX_SIZE			1460
-#define TCPIP_TCP_SOCKET_DEFAULT_RX_SIZE			1460
+#define TCPIP_TCP_SOCKET_DEFAULT_TX_SIZE			512
+#define TCPIP_TCP_SOCKET_DEFAULT_RX_SIZE			512
 #define TCPIP_TCP_DYNAMIC_OPTIONS             			true
 #define TCPIP_TCP_START_TIMEOUT_VAL		        	1000
 #define TCPIP_TCP_DELAYED_ACK_TIMEOUT		    		100
@@ -255,25 +260,24 @@ extern "C" {
 
 
 /* Network Configuration Index 0 */
-#define TCPIP_NETWORK_DEFAULT_INTERFACE_NAME_IDX0	"PIC32MZW1"
+#define TCPIP_NETWORK_DEFAULT_INTERFACE_NAME_IDX0 "PIC32MZW1"
 #define TCPIP_IF_PIC32MZW1
 
-#define TCPIP_NETWORK_DEFAULT_HOST_NAME_IDX0				"MCHPBOARD_W"
-#define TCPIP_NETWORK_DEFAULT_MAC_ADDR_IDX0				0
+#define TCPIP_NETWORK_DEFAULT_HOST_NAME_IDX0              "MCHPBOARD_W"
+#define TCPIP_NETWORK_DEFAULT_MAC_ADDR_IDX0               0
 
-#define TCPIP_NETWORK_DEFAULT_IP_ADDRESS_IDX0			"0.0.0.0"
-#define TCPIP_NETWORK_DEFAULT_IP_MASK_IDX0			"255.255.255.0"
-#define TCPIP_NETWORK_DEFAULT_GATEWAY_IDX0			"192.168.1.1"
-#define TCPIP_NETWORK_DEFAULT_DNS_IDX0				"192.168.1.1"
-#define TCPIP_NETWORK_DEFAULT_SECOND_DNS_IDX0			"0.0.0.0"
-#define TCPIP_NETWORK_DEFAULT_POWER_MODE_IDX0			"full"
-#define TCPIP_NETWORK_DEFAULT_INTERFACE_FLAGS_IDX0			\
+#define TCPIP_NETWORK_DEFAULT_IP_ADDRESS_IDX0         "0.0.0.0"
+#define TCPIP_NETWORK_DEFAULT_IP_MASK_IDX0            "255.255.255.0"
+#define TCPIP_NETWORK_DEFAULT_GATEWAY_IDX0            "192.168.1.1"
+#define TCPIP_NETWORK_DEFAULT_DNS_IDX0                "192.168.1.1"
+#define TCPIP_NETWORK_DEFAULT_SECOND_DNS_IDX0         "0.0.0.0"
+#define TCPIP_NETWORK_DEFAULT_POWER_MODE_IDX0         "full"
+#define TCPIP_NETWORK_DEFAULT_INTERFACE_FLAGS_IDX0            \
                                                     TCPIP_NETWORK_CONFIG_DHCP_CLIENT_ON |\
                                                     TCPIP_NETWORK_CONFIG_DNS_CLIENT_ON |\
-                                                    TCPIP_NETWORK_CONFIG_MULTICAST_ON |\
                                                     TCPIP_NETWORK_CONFIG_IP_STATIC
                                                     
-#define TCPIP_NETWORK_DEFAULT_MAC_DRIVER_IDX0			WDRV_PIC32MZW1_MACObject
+#define TCPIP_NETWORK_DEFAULT_MAC_DRIVER_IDX0         WDRV_PIC32MZW1_MACObject
 
 
 
@@ -306,7 +310,7 @@ extern "C" {
 #define TCPIP_UDP_MAX_SOCKETS		                	10
 #define TCPIP_UDP_SOCKET_DEFAULT_TX_SIZE		    	512
 #define TCPIP_UDP_SOCKET_DEFAULT_TX_QUEUE_LIMIT    	 	3
-#define TCPIP_UDP_SOCKET_DEFAULT_RX_QUEUE_LIMIT			16
+#define TCPIP_UDP_SOCKET_DEFAULT_RX_QUEUE_LIMIT			3
 #define TCPIP_UDP_USE_POOL_BUFFERS   false
 #define TCPIP_UDP_USE_TX_CHECKSUM             			true
 #define TCPIP_UDP_USE_RX_CHECKSUM             			true
@@ -319,7 +323,7 @@ extern "C" {
 #define NET_PRES_NUM_SOCKETS 10
 
 /* Net Pres RTOS Configurations*/
-#define NET_PRES_RTOS_STACK_SIZE                6144
+#define NET_PRES_RTOS_STACK_SIZE                8192
 #define NET_PRES_RTOS_TASK_PRIORITY             1
 	
 #define FREERTOS
@@ -341,8 +345,8 @@ extern "C" {
 #define TCPIP_DNS_CLIENT_MAX_HOSTNAME_LEN			64
 #define TCPIP_DNS_CLIENT_MAX_SELECT_INTERFACES		4
 #define TCPIP_DNS_CLIENT_DELETE_OLD_ENTRIES			true
-#define TCPIP_DNS_CLIENT_CONSOLE_CMD              	false
-#define TCPIP_DNS_CLIENT_USER_NOTIFICATION   true
+#define TCPIP_DNS_CLIENT_CONSOLE_CMD               	true
+#define TCPIP_DNS_CLIENT_USER_NOTIFICATION   false
 
 
 
@@ -363,7 +367,7 @@ extern "C" {
 #define TCPIP_DHCP_HOST_NAME_SIZE                   20
 #define TCPIP_DHCP_CLIENT_CONNECT_PORT              68
 #define TCPIP_DHCP_SERVER_LISTEN_PORT               67
-#define TCPIP_DHCP_CLIENT_CONSOLE_CMD              	false
+#define TCPIP_DHCP_CLIENT_CONSOLE_CMD               true
 
 #define TCPIP_DHCP_USE_OPTION_TIME_SERVER           0
 #define TCPIP_DHCP_TIME_SERVER_ADDRESSES            0
@@ -439,6 +443,7 @@ extern "C" {
 
 #define TCPIP_STACK_TICK_RATE		        		5
 #define TCPIP_STACK_SECURE_PORT_ENTRIES             10
+#define TCPIP_STACK_LINK_RATE		        		333
 
 #define TCPIP_STACK_ALIAS_INTERFACE_SUPPORT   false
 
@@ -453,7 +458,9 @@ extern "C" {
 #define TCPIP_STACK_INTERFACE_CHANGE_SIGNALING   false
 #define TCPIP_STACK_CONFIGURATION_SAVE_RESTORE   true
 #define TCPIP_STACK_EXTERN_PACKET_PROCESS   false
+#define TCPIP_STACK_RUN_TIME_INIT   false
 
+#define TCPIP_STACK_INTMAC_COUNT           0
 
 
 
@@ -476,7 +483,7 @@ extern "C" {
 #define TCPIP_NTP_SERVER_MAX_LENGTH				30
 #define TCPIP_NTP_QUERY_INTERVAL				600
 #define TCPIP_NTP_FAST_QUERY_INTERVAL	    	14
-#define TCPIP_NTP_TASK_TICK_RATE				10
+#define TCPIP_NTP_TASK_TICK_RATE				1100
 #define TCPIP_NTP_RX_QUEUE_LIMIT				2
 
 
@@ -499,6 +506,8 @@ extern "C" {
 #define WOLFSSL_HAVE_MCHP_HW_CRYPTO_ECC_HW_BA414E
 #define WOLFSSL_HAVE_MCHP_BA414E_CRYPTO
 // ---------- CRYPTO HARDWARE MANIFEST END ----------
+#undef WOLFSSL_HAVE_MIN
+#undef WOLFSSL_HAVE_MAX
 // ---------- FUNCTIONAL CONFIGURATION START ----------
 #define WOLFSSL_AES_SMALL_TABLES
 #define WOLFSSL_PIC32MZ_HASH

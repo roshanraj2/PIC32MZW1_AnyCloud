@@ -1,7 +1,6 @@
 /**
  * \file
- *
- * \brief bool define for systems that don't have it
+ * \brief  Configure the platform interfaces for cryptoauthlib
  *
  * \copyright (c) 2015-2020 Microchip Technology Inc. and its subsidiaries.
  *
@@ -25,19 +24,38 @@
  * THE AMOUNT OF FEES, IF ANY, THAT YOU HAVE PAID DIRECTLY TO MICROCHIP FOR
  * THIS SOFTWARE.
  */
+#ifndef ATCA_PLATFORM_H
+#define ATCA_PLATFORM_H
 
-#ifndef _ATCA_BOOL_H
-#define _ATCA_BOOL_H
+#include <stddef.h>
+#include <string.h>
 
-#if defined(_MSC_VER) && (_MSC_VER <= 1700)
-// VS2012 and earlier don't support stdbool.h
-    #ifndef __cplusplus
-        #define bool    unsigned char
-        #define false   0
-        #define true    1
-    #endif
+#if defined(ATCA_TESTS_ENABLED) || !defined(ATCA_PLATFORM_MALLOC)
+void*   hal_malloc(size_t size);
+void    hal_free(void* ptr);
 #else
-    #include <stdbool.h>
+#define hal_malloc      ATCA_PLATFORM_MALLOC
+#define hal_free        ATCA_PLATFORM_FREE
 #endif
 
+#ifdef ATCA_PLATFORM_MEMSET_S
+#define hal_memset_s    ATCA_PLATFORM_MEMSET_S
+#else
+#ifndef memset_s
+#define hal_memset_s    atcab_memset_s
+#else
+#define hal_memset_s    memset_s
 #endif
+#endif
+
+#ifdef ATCA_PLATFORM_STRCASESTR
+#define lib_strcasestr  ATCA_PLATFORM_STRCASESTR
+#else
+#ifndef strcasestr
+const char *lib_strcasestr(const char *haystack, const char *needle);
+#else
+#define lib_strcasestr  strcasestr
+#endif
+#endif /* ATCA_PLATFORM_STRCASESTR */
+
+#endif /* ATCA_PLATFORM_H */
